@@ -49,13 +49,13 @@ cp /kuhpc/work/bi/usage.txt .
       print c1+0, c10+0, c100+0, c1000+0
     }
   ')
-  echo "Individual user allotment with equal sharing per number of current users above these thresholds:"
-  echo -e ">= 1GB\t10GB\t100GB\t1000GB"
+  echo "Equal sharing user allotment"
+  echo -e "per current # users >=\t1GB\t10GB\t100GB\t1000GB"
   alloc1=$(( c1 > 0 ? total_gb / c1 : 0 ))
   alloc10=$(( c10 > 0 ? total_gb / c10 : 0 ))
   alloc100=$(( c100 > 0 ? total_gb / c100 : 0 ))
   alloc1000=$(( c1000 > 0 ? total_gb / c1000 : 0 ))
-  echo -e "${alloc1}GB\t${alloc10}GB\t${alloc100}GB\t${alloc1000}GB"
+  echo -e "allotment =\t\t${alloc1}GB\t${alloc10}GB\t${alloc100}GB\t${alloc1000}GB"
   echo
 
   # current usage
