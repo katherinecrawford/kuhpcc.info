@@ -1,5 +1,5 @@
-#!/bin/sh
-#
+#!/bin/bash
+
 #SBATCH --job-name=get.data
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
