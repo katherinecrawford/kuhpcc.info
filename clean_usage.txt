@@ -5,9 +5,9 @@ Updated: Tue Jul  1 17:00:19 CDT 2025
 Size	Used	Avail	Use%
 40T	38T	2.9T	93%
 
-Individual user allotment with equal sharing:
+Equal sharing user allotment
 per current # users >=	1GB	10GB	100GB	1000GB
-			835GB	1024GB	1575GB	3723GB
+allotment =		835GB	1024GB	1575GB	3723GB
 
 RANK	USERNAME	DISK USED	FILES USED
 1	p653w640	8079.36GB	920666
