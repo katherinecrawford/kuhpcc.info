@@ -8,6 +8,8 @@
 #SBATCH --mem=1000            # memory requested
 #SBATCH --time=10
 
+echo "Script ran at $(date)" >> logfile.txt
+
 # get the usage file
 cp /kuhpc/work/bi/usage.txt .
 
