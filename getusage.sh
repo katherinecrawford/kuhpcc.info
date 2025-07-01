@@ -1,14 +1,16 @@
 #!/bin/sh
 #
-#SBATCH --job-name=get.data               # Job Name
-#SBATCH --nodes=1               # 40 nodes
-#SBATCH --ntasks-per-node=1               # 40 CPU allocation per Task
-#SBATCH --partition=sixhour            # Name of the Slurm partition used
-#SBATCH --chdir=/home/k506c250/work/kuhpcc.info 	# Set working d$
-#SBATCH --mem=1000            # memory requested
+#SBATCH --job-name=get.data
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --partition=sixhour
+#SBATCH --chdir=/home/k506c250/work/kuhpcc.info
+#SBATCH --mem=1000
 #SBATCH --time=10
 
-echo "Script ran at $(date)" >> logfile.txt
+# this script runs every hour on the 45 minute mark using cron
+# crontab -e:
+# 45 * * * * sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
 
 # get the usage file
 cp /kuhpc/work/bi/usage.txt .
@@ -88,3 +90,6 @@ git add clean_usage.txt
 git add usage.txt
 git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M')"
 git push origin main
+
+# github repo: https://github.com/katherinecrawford/kuhpcc.info
+# file: https://github.com/katherinecrawford/kuhpcc.info/blob/main/clean_usage.txt
