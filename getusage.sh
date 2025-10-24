@@ -10,7 +10,14 @@
 
 # this script runs every hour on the 45 minute mark using cron
 # crontab -e:
-# 45 * * * * sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
+# 45 * * * * flock -n /tmp/kuhpcc.lock sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
+
+# make sure git process isn't causing a failure
+cd /home/k506c250/work/kuhpcc.info || exit 1
+find .git -type f -name "*.lock" -delete
+
+# remove previous slurm file(s)
+rm slurm*
 
 # get the usage file
 cp /kuhpc/work/bi/usage.txt .
@@ -59,7 +66,7 @@ cp /kuhpc/work/bi/usage.txt .
   alloc10=$(( c10 > 0 ? total_gb / c10 : 0 ))
   alloc100=$(( c100 > 0 ? total_gb / c100 : 0 ))
   alloc1000=$(( c1000 > 0 ? total_gb / c1000 : 0 ))
-  echo -e "allotment =\t\t${alloc1}GB\t${alloc10}GB\t${alloc100}GB\t${alloc1000}GB"
+  echo -e "allotment =\t\t\t${alloc1}GB\t${alloc10}GB\t${alloc100}GB\t${alloc1000}GB"
   echo
 
   # current usage
