@@ -17,7 +17,7 @@ cd /home/k506c250/work/kuhpcc.info || exit 1
 find .git -type f -name "*.lock" -delete
 
 # remove previous slurm file(s)
-rm slurm*
+ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm --
 
 # get the usage file
 cp /kuhpc/work/bi/usage.txt .
