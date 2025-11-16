@@ -12,7 +12,10 @@
 # crontab -e:
 # 45 * * * * flock -n /tmp/kuhpcc.lock sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
 
-# make sure git process isn't causing a failure
+# make sure simultaneous process isn't causing a failure
+LOCK="/home/k506c250/work/kuhpcc.info/LOCK"
+exec 200>$LOCK
+flock -n 200 || { echo "Another job is running, exiting."; exit 0; }
 cd /home/k506c250/work/kuhpcc.info || exit 1
 find .git -type f -name "*.lock" -delete
 
