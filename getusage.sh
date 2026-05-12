@@ -7,15 +7,21 @@
 #SBATCH --chdir=/home/k506c250/work/kuhpcc.info
 #SBATCH --mem=1000
 #SBATCH --time=10
+#SBATCH --mail-type=FAIL,TIMEOUT
+#SBATCH --mail-user=kjcrawford@ku.edu
 
 # this script runs every hour on the 45 minute mark using cron
 # crontab -e:
 # 45 * * * * flock -n /tmp/kuhpcc.lock sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
 
+set -e
+
 # make sure simultaneous process isn't causing a failure
 LOCK="/home/k506c250/work/kuhpcc.info/LOCK"
 exec 200>$LOCK
-flock -n 200 || { echo "Another job is running, exiting."; exit 0; }
+flock -n 200 || { echo "Another job is running, exiting."; exit 1; }
+trap "rm -f $LOCK" EXIT   # add this line
+
 cd /home/k506c250/work/kuhpcc.info || exit 1
 find .git -type f -name "*.lock" -delete
 
