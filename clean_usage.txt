@@ -1,6 +1,6 @@
 BI work storage use per user
 
-Updated: Tue May 12 20:30:38 CDT 2026
+Updated: Tue May 12 21:30:24 CDT 2026
 
 Size	Used	Avail	Use%
 40T	39T	1.1T	98%
