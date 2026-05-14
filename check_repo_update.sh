@@ -6,7 +6,7 @@
 #SBATCH --chdir=/home/k506c250/work/kuhpcc.info
 #SBATCH --mem=1000
 #SBATCH --time=10
-#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=FAIL,TIMEOUT
 #SBATCH --mail-user=kjcrawford@ku.edu
 
 REPO_DIR="/home/k506c250/work/kuhpcc.info"
