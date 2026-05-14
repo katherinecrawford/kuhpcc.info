@@ -23,7 +23,9 @@ find .git -type f -name "*.lock" -delete 2>/dev/null || true
 ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm -f 2>/dev/null || true
 
 # sync with remote
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
+find .git -name "*.lock" -delete 2>/dev/null || true
 
 # check if source usage.txt was modified in the last 2 hours
 if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; then
