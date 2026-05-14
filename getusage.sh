@@ -16,11 +16,6 @@
 
 set -e
 
-# make sure simultaneous process isn't causing a failure
-LOCK="/home/k506c250/work/kuhpcc.info/LOCK"
-exec 200>$LOCK
-flock -n 200 || { echo "Another job is running, exiting."; exit 0; }
-trap "rm -f $LOCK" EXIT
 cd /home/k506c250/work/kuhpcc.info || exit 1
 
 # cleanup stale git locks and old slurm files
@@ -35,6 +30,8 @@ if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; the
     echo "Source usage.txt is stale, skipping update."
     exit 0
 fi
+
+cp /kuhpc/work/bi/usage.txt .
 
 # create a cleaned usage file with summary information
 {
@@ -109,6 +106,7 @@ fi
 cd /home/k506c250/work/kuhpcc.info
 git add clean_usage.txt
 git add usage.txt
+git diff --cached --quiet && echo "Nothing to commit, skipping." && exit 0
 git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M')"
 git push origin main
 

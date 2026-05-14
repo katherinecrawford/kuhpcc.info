@@ -22,5 +22,5 @@ if [ "$diff_hours" -gt 24 ]; then
     exit 1
 else
     echo "Repo updated within the last 24 hours. No email alert will be sent."
-    exit 0  # stop here so Slurm doesn't email you
+    exit 0  # stop here so Slurm doesn't email
 fi
