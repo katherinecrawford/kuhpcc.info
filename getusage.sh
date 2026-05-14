@@ -14,32 +14,27 @@
 # crontab -e:
 # 45 * * * * flock -n /tmp/kuhpcc.lock sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
 
-# set -e
+set -e
 
 # make sure simultaneous process isn't causing a failure
 LOCK="/home/k506c250/work/kuhpcc.info/LOCK"
 exec 200>$LOCK
-# flock -n 200 || { echo "Another job is running, exiting."; exit 1; }
+flock -n 200 || { echo "Another job is running, exiting."; exit 0; }
 trap "rm -f $LOCK" EXIT
-
 cd /home/k506c250/work/kuhpcc.info || exit 1
-find .git -type f -name "*.lock" -delete
+
+# cleanup stale git locks and old slurm files
+find .git -type f -name "*.lock" -delete 2>/dev/null || true
+ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm -f 2>/dev/null || true
+
+# sync with remote
+git pull origin main
 
 # check if source usage.txt was modified in the last 2 hours
 if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; then
-    echo "WARNING: /kuhpc/work/bi/usage.txt has not been updated in over 2 hours!"
-    exit 0  # triggers Slurm failure email
+    echo "Source usage.txt is stale, skipping update."
+    exit 0
 fi
-
-git pull origin main
-
-cp /kuhpc/work/bi/usage.txt .
-
-# remove previous slurm file(s)
-ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm --
-
-# get the usage file
-cp /kuhpc/work/bi/usage.txt .
 
 # create a cleaned usage file with summary information
 {
