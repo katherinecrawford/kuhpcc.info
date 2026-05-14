@@ -31,6 +31,8 @@ if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; the
     exit 0  # triggers Slurm failure email
 fi
 
+git pull origin main
+
 cp /kuhpc/work/bi/usage.txt .
 
 # remove previous slurm file(s)
