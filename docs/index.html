@@ -120,7 +120,7 @@ footer a:hover{color:var(--blue)}
   <div class="logo">BI<span>.</span>storage</div>
   <div class="meta">
     <div>Updated: <b id="ts-updated">Thu May 14 19:30:45 CDT 2026</b></div>
-    <div>Built: <b id="ts-built">2026-05-15 22:07 UTC</b></div>
+    <div>Built: <b id="ts-built">2026-05-15 22:14 UTC</b></div>
   </div>
 </header>
 
@@ -154,7 +154,7 @@ footer a:hover{color:var(--blue)}
 <div class="controls">
   <div class="ctrl-group">
     <label>Top N users</label>
-    <input type="number" id="ctrl-topn" value="25" min="5" max="500" style="width:80px"/>
+    <input type="number" id="ctrl-topn" value="30" min="5" max="500" style="width:80px"/>
   </div>
   <div class="ctrl-group">
     <label>Min disk (GB)</label>
@@ -200,6 +200,7 @@ footer a:hover{color:var(--blue)}
 <script>
 // ── embedded data ─────────────────────────────────────────────────────────────
 const ALL_ROWS = [{"username":"p653w640","disk_gb":7342.08,"files_used":938264,"rank":1},{"username":"d669d153","disk_gb":4362.24,"files_used":698165,"rank":2},{"username":"c378m666","disk_gb":3481.6,"files_used":68804,"rank":3},{"username":"a338p722","disk_gb":2959.36,"files_used":31322,"rank":4},{"username":"fmachado-stredel_sta","disk_gb":2488.32,"files_used":407864,"rank":5},{"username":"100315184","disk_gb":2058.24,"files_used":68489,"rank":6},{"username":"100576024","disk_gb":1914.88,"files_used":16098,"rank":7},{"username":"l944d476","disk_gb":1832.96,"files_used":91642,"rank":8},{"username":"100636804","disk_gb":1556.48,"files_used":390735,"rank":9},{"username":"h690s403","disk_gb":1536.0,"files_used":9094,"rank":10},{"username":"a619f280","disk_gb":1341.44,"files_used":195792,"rank":11},{"username":"k246c679","disk_gb":962.8,"files_used":1141042,"rank":12},{"username":"100490589","disk_gb":774.6,"files_used":1429154,"rank":13},{"username":"100511615","disk_gb":692.6,"files_used":1083189,"rank":14},{"username":"c889s469","disk_gb":611.7,"files_used":24369,"rank":15},{"username":"100478889","disk_gb":572.0,"files_used":896,"rank":16},{"username":"m060h638","disk_gb":530.2,"files_used":540733,"rank":17},{"username":"100426917","disk_gb":488.3,"files_used":3696,"rank":18},{"username":"c148p274","disk_gb":457.1,"files_used":1304,"rank":19},{"username":"p953c068","disk_gb":342.2,"files_used":9695,"rank":20},{"username":"s649d522","disk_gb":329.5,"files_used":9656,"rank":21},{"username":"100371065","disk_gb":317.3,"files_used":326556,"rank":22},{"username":"k817a873","disk_gb":250.7,"files_used":317,"rank":23},{"username":"memort","disk_gb":232.5,"files_used":2550,"rank":24},{"username":"c361n270","disk_gb":232.0,"files_used":2832,"rank":25},{"username":"r110a449","disk_gb":203.5,"files_used":19990,"rank":26},{"username":"100435315","disk_gb":191.9,"files_used":321109,"rank":27},{"username":"r504w480","disk_gb":168.0,"files_used":8805,"rank":28},{"username":"k506c250","disk_gb":129.9,"files_used":41255,"rank":29},{"username":"d797i435","disk_gb":122.6,"files_used":7383,"rank":30},{"username":"12079","disk_gb":98.98,"files_used":5831,"rank":31},{"username":"144363","disk_gb":97.05,"files_used":788,"rank":32},{"username":"a733h002","disk_gb":93.38,"files_used":5224,"rank":33},{"username":"b686w673","disk_gb":67.07,"files_used":999,"rank":34},{"username":"e059n789","disk_gb":59.95,"files_used":1690,"rank":35},{"username":"l095w344","disk_gb":57.38,"files_used":1514,"rank":36},{"username":"a265m760","disk_gb":45.56,"files_used":874,"rank":37},{"username":"m538c005","disk_gb":37.38,"files_used":2798,"rank":38},{"username":"100316509","disk_gb":36.81,"files_used":309355,"rank":39},{"username":"s953b810","disk_gb":20.44,"files_used":228013,"rank":40},{"username":"d135l135","disk_gb":18.49,"files_used":22540,"rank":41},{"username":"135273","disk_gb":17.59,"files_used":261797,"rank":42},{"username":"j306c371","disk_gb":17.4,"files_used":383547,"rank":43},{"username":"100385527","disk_gb":12.74,"files_used":322702,"rank":44},{"username":"root","disk_gb":10.95,"files_used":45337,"rank":45},{"username":"100395100","disk_gb":10.81,"files_used":708,"rank":46},{"username":"m350g339","disk_gb":8.65,"files_used":397,"rank":47},{"username":"jkarch","disk_gb":8.07,"files_used":144402,"rank":48},{"username":"d711r320","disk_gb":6.86,"files_used":117,"rank":49},{"username":"100356371","disk_gb":5.63,"files_used":5030,"rank":50},{"username":"100393729","disk_gb":5.59,"files_used":401052,"rank":51},{"username":"e379l440","disk_gb":4.95,"files_used":240,"rank":52},{"username":"100549752","disk_gb":2.83,"files_used":41732,"rank":53},{"username":"o031l418","disk_gb":2.78,"files_used":250,"rank":54},{"username":"100356619","disk_gb":1.79,"files_used":22628,"rank":55},{"username":"159799","disk_gb":0.999,"files_used":20,"rank":56},{"username":"k917r540","disk_gb":0.767,"files_used":131,"rank":57},{"username":"100361352","disk_gb":0.429,"files_used":85,"rank":58},{"username":"c447s996","disk_gb":0.316,"files_used":50,"rank":59},{"username":"100478347","disk_gb":0.043,"files_used":1422,"rank":60},{"username":"k934h127","disk_gb":0.039,"files_used":11,"rank":61},{"username":"r557e636","disk_gb":0.009,"files_used":10,"rank":62},{"username":"100428231","disk_gb":0.005,"files_used":139,"rank":63},{"username":"p470d241","disk_gb":0.003,"files_used":134,"rank":64},{"username":"p757p411","disk_gb":0.002,"files_used":34,"rank":65},{"username":"100302928","disk_gb":0.0,"files_used":2,"rank":66},{"username":"moyle","disk_gb":0.0,"files_used":8,"rank":67},{"username":"100435793","disk_gb":0.0,"files_used":18,"rank":68},{"username":"100527368","disk_gb":0.0,"files_used":6,"rank":69}];
+const ALLOTMENTS = [{"label":"\u22651GB share","gb":744.0},{"label":"\u226510GB share","gb":890.0},{"label":"\u2265100GB share","gb":1365.0},{"label":"\u22651000GB share","gb":3723.0}];  // [{label, gb}, ...] for >=1/10/100/1000GB tiers
 
 // ── chart.js defaults ─────────────────────────────────────────────────────────
 Chart.defaults.color = '#5a6a78';
@@ -214,41 +215,68 @@ const C = {
 // ── bar chart ─────────────────────────────────────────────────────────────────
 let barChart;
 
-function gradientColors(ctx, count) {
-  const g = ctx.createLinearGradient(0,0,400,0);
-  g.addColorStop(0, C.yellow);
-  g.addColorStop(1, C.accent);
-  return g;
-}
-
 function buildBarChart(rows, metric) {
-  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, 30);
+  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]);
   const labels = sorted.map(r => r.username);
   const vals   = sorted.map(r => r[metric]);
   const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
 
+  // reference line colours — muted so they don't fight the bars
+  const refColors = ['#3dd68c','#5eb8ff','#f5c842','#ff6b4a'];
+
+  // annotation-style reference lines as extra datasets (scatter points at each label)
+  const refDatasets = metric === 'disk_gb' ? ALLOTMENTS.map((a, i) => ({
+    label: a.label,
+    data: labels.map(() => a.gb),
+    type: 'line',
+    borderColor: refColors[i % refColors.length],
+    borderWidth: 1.5,
+    borderDash: [4, 3],
+    pointRadius: 0,
+    fill: false,
+    tension: 0,
+  })) : [];
+
   if (barChart) barChart.destroy();
   const ctx = document.getElementById('bar-chart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,400,0);
+  grad.addColorStop(0, C.yellow);
+  grad.addColorStop(1, C.accent);
+
   barChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label,
-        data: vals,
-        backgroundColor: gradientColors(ctx, vals.length),
-        borderWidth: 0,
-        borderRadius: 3,
-      }]
+      datasets: [
+        {
+          label,
+          data: vals,
+          backgroundColor: grad,
+          borderWidth: 0,
+          borderRadius: 3,
+          order: 1,
+        },
+        ...refDatasets.map(d => ({...d, order: 0})),
+      ]
     },
     options: {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      maintainAspectRatio: false,
       animation: { duration: 500, easing: 'easeOutQuart' },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: refDatasets.length > 0,
+          position: 'top',
+          align: 'end',
+          labels: {
+            color: C.muted,
+            font: { size: 10 },
+            boxWidth: 20,
+            boxHeight: 1,
+            filter: item => item.text !== label,  // hide bar dataset from legend
+          }
+        },
         tooltip: {
           backgroundColor: C.bg,
           borderColor: C.border,
@@ -256,9 +284,13 @@ function buildBarChart(rows, metric) {
           titleColor: C.blue,
           bodyColor: C.muted,
           callbacks: {
-            label: ctx => metric === 'disk_gb'
-              ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
-              : ` ${ctx.parsed.x.toLocaleString()} files`
+            label: ctx => {
+              if (ctx.dataset.type === 'line')
+                return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:0})} GB`;
+              return metric === 'disk_gb'
+                ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
+                : ` ${ctx.parsed.x.toLocaleString()} files`;
+            }
           }
         }
       },
@@ -314,23 +346,22 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 // ── main render ───────────────────────────────────────────────────────────────
 function render() {
-  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 25;
+  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 30;
   const minGb = parseFloat(document.getElementById('ctrl-mingb').value) || 0;
   const metric = document.getElementById('ctrl-metric').value;
 
   let rows = ALL_ROWS.filter(r => r.disk_gb >= minGb);
 
-  // sort for table
-  rows.sort((a, b) => {
+  // table always shows all filtered rows, sorted by chosen column
+  const tableRows = [...rows].sort((a, b) => {
     const av = a[sortCol], bv = b[sortCol];
     if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return sortAsc ? av - bv : bv - av;
   });
-  const tableRows = rows.slice(0, topN);
   buildTable(tableRows);
 
-  // charts use top-N by disk regardless of table sort
-  const chartRows = [...rows].sort((a,b) => b.disk_gb - a.disk_gb).slice(0, topN);
+  // chart shows top-N by disk (or files) regardless of table sort
+  const chartRows = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, topN);
   buildBarChart(chartRows, metric);
 }
 
