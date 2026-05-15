@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BI Work Storage Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080b10;--surface:#0e1318;--surface2:#141a21;
+  --border:#1e262f;--border2:#2a3540;
+  --accent:#ff6b4a;--blue:#5eb8ff;--green:#3dd68c;--yellow:#f5c842;
+  --text:#cdd9e5;--muted:#5a6a78;--mono:'IBM Plex Mono',monospace;
+  --display:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%,#0d2030 0%,transparent 70%)}
+
+/* ── header ── */
+header{
+  padding:28px 36px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.logo{font-family:var(--display);font-size:1.5rem;font-weight:800;color:var(--blue);
+  letter-spacing:-.02em;line-height:1}
+.logo span{color:var(--accent)}
+.meta{font-size:.7rem;color:var(--muted);line-height:1.8;text-align:right}
+.meta b{color:var(--text)}
+
+/* ── tiles ── */
+.tiles{display:flex;gap:10px;padding:24px 36px 0;flex-wrap:wrap}
+.tile{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:16px 20px;flex:1;min-width:110px;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.tile:hover{border-color:var(--border2)}
+.tile::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 60%)}
+.tile-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:8px}
+.tile-value{font-size:1.6rem;font-weight:600;font-family:var(--display);line-height:1}
+.c-blue{color:var(--blue)}.c-yellow{color:var(--yellow)}
+.c-green{color:var(--green)}.c-accent{color:var(--accent)}
+
+/* ── usage bar ── */
+.bar-section{margin:20px 36px 0;
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px}
+.bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.bar-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.bar-pct{font-family:var(--display);font-size:1.1rem;font-weight:700;color:var(--text)}
+.bar-track{background:var(--border2);border-radius:4px;height:12px;overflow:hidden}
+.bar-fill{height:12px;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* ── controls ── */
+.controls{display:flex;gap:12px;padding:20px 36px 0;flex-wrap:wrap;align-items:flex-end}
+.ctrl-group label{display:block;font-size:.6rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:5px}
+.ctrl-group input,.ctrl-group select{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--mono);font-size:.82rem;padding:7px 11px;border-radius:6px;outline:none;
+  transition:border-color .15s;
+}
+.ctrl-group input:focus,.ctrl-group select:focus{border-color:var(--blue)}
+select option{background:var(--surface2)}
+
+/* ── main grid ── */
+.grid{display:grid;grid-template-columns:2fr 1.1fr;gap:14px;padding:16px 36px 0}
+@media(max-width:780px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px}
+.panel-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--blue);margin-bottom:14px}
+
+/* ── table ── */
+.table-wrap{margin:14px 36px 36px;
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{padding:10px 14px;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);font-weight:400;border-bottom:1px solid var(--border);
+  text-align:left;white-space:nowrap;position:sticky;top:0;background:var(--surface);
+  cursor:pointer;user-select:none}
+thead th:hover{color:var(--text)}
+thead th.sorted{color:var(--blue)}
+thead th .sort-arrow{margin-left:4px;opacity:.5;font-style:normal}
+thead th.sorted .sort-arrow{opacity:1}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:#111820}
+tbody td{padding:6px 14px;border-bottom:1px solid #0f151b;white-space:nowrap}
+.td-rank{color:var(--muted)}
+.td-user{color:var(--blue);font-weight:600}
+.td-disk{color:var(--yellow);font-weight:600}
+.td-files{color:var(--muted)}
+.minibar-wrap{width:100px;background:var(--border2);border-radius:3px;height:7px;overflow:hidden}
+.minibar-fill{height:7px;border-radius:3px}
+
+/* ── animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.tile{animation:fadeUp .4s ease both}
+.tile:nth-child(1){animation-delay:.05s}.tile:nth-child(2){animation-delay:.1s}
+.tile:nth-child(3){animation-delay:.15s}.tile:nth-child(4){animation-delay:.2s}
+.tile:nth-child(5){animation-delay:.25s}.tile:nth-child(6){animation-delay:.3s}
+.panel{animation:fadeUp .5s ease .2s both}
+
+/* ── footer ── */
+footer{padding:16px 36px;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);
+  margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BI<span>.</span>storage</div>
+  <div class="meta">
+    <div>Updated: <b id="ts-updated">Thu May 14 19:30:45 CDT 2026</b></div>
+    <div>Built: <b id="ts-built">2026-05-15 21:48 UTC</b></div>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="tile-label">Total</div>
+    <div class="tile-value c-blue">40T</div></div>
+  <div class="tile"><div class="tile-label">Used</div>
+    <div class="tile-value c-yellow">39T</div></div>
+  <div class="tile"><div class="tile-label">Available</div>
+    <div class="tile-value c-green">1.1T</div></div>
+  <div class="tile"><div class="tile-label">Utilisation</div>
+    <div class="tile-value c-accent">98%</div></div>
+  <div class="tile"><div class="tile-label">Active Users</div>
+    <div class="tile-value c-blue">69</div></div>
+  <div class="tile"><div class="tile-label">Allotment</div>
+    <div class="tile-value c-green">744GB</div></div>
+</div>
+
+<div class="bar-section">
+  <div class="bar-header">
+    <span class="bar-title">Storage utilisation</span>
+    <span class="bar-pct">98%</span>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" id="main-bar"
+         style="width:98%;"
+    ></div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Top N users</label>
+    <input type="number" id="ctrl-topn" value="25" min="5" max="500" style="width:80px"/>
+  </div>
+  <div class="ctrl-group">
+    <label>Min disk (GB)</label>
+    <input type="number" id="ctrl-mingb" value="0" min="0" style="width:95px"/>
+  </div>
+  <div class="ctrl-group">
+    <label>Chart metric</label>
+    <select id="ctrl-metric">
+      <option value="disk_gb">Disk Used</option>
+      <option value="files_used">Files Used</option>
+    </select>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="panel-title">Top Users</div>
+    <canvas id="bar-chart" height="340"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Distribution (log scale)</div>
+    <canvas id="hist-chart" height="340"></canvas>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="user-table">
+    <thead>
+      <tr>
+        <th data-col="rank" class="sorted"># <i class="sort-arrow">↓</i></th>
+        <th data-col="username">Username <i class="sort-arrow">↕</i></th>
+        <th data-col="disk_gb">Disk Used <i class="sort-arrow">↕</i></th>
+        <th data-col="files_used">Files <i class="sort-arrow">↕</i></th>
+        <th>Usage</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<footer>
+  <span>BI Work Storage Monitor</span>
+  <span>·</span>
+  <span>Data refreshes hourly via cron → GitHub Actions → GitHub Pages</span>
+</footer>
+
+<script>
+// ── embedded data ─────────────────────────────────────────────────────────────
+const ALL_ROWS = [{"username":"p653w640","disk_gb":7342.08,"files_used":938264,"rank":1},{"username":"d669d153","disk_gb":4362.24,"files_used":698165,"rank":2},{"username":"c378m666","disk_gb":3481.6,"files_used":68804,"rank":3},{"username":"a338p722","disk_gb":2959.36,"files_used":31322,"rank":4},{"username":"fmachado-stredel_sta","disk_gb":2488.32,"files_used":407864,"rank":5},{"username":"100315184","disk_gb":2058.24,"files_used":68489,"rank":6},{"username":"100576024","disk_gb":1914.88,"files_used":16098,"rank":7},{"username":"l944d476","disk_gb":1832.96,"files_used":91642,"rank":8},{"username":"100636804","disk_gb":1556.48,"files_used":390735,"rank":9},{"username":"h690s403","disk_gb":1536.0,"files_used":9094,"rank":10},{"username":"a619f280","disk_gb":1341.44,"files_used":195792,"rank":11},{"username":"k246c679","disk_gb":962.8,"files_used":1141042,"rank":12},{"username":"100490589","disk_gb":774.6,"files_used":1429154,"rank":13},{"username":"100511615","disk_gb":692.6,"files_used":1083189,"rank":14},{"username":"c889s469","disk_gb":611.7,"files_used":24369,"rank":15},{"username":"100478889","disk_gb":572.0,"files_used":896,"rank":16},{"username":"m060h638","disk_gb":530.2,"files_used":540733,"rank":17},{"username":"100426917","disk_gb":488.3,"files_used":3696,"rank":18},{"username":"c148p274","disk_gb":457.1,"files_used":1304,"rank":19},{"username":"p953c068","disk_gb":342.2,"files_used":9695,"rank":20},{"username":"s649d522","disk_gb":329.5,"files_used":9656,"rank":21},{"username":"100371065","disk_gb":317.3,"files_used":326556,"rank":22},{"username":"k817a873","disk_gb":250.7,"files_used":317,"rank":23},{"username":"memort","disk_gb":232.5,"files_used":2550,"rank":24},{"username":"c361n270","disk_gb":232.0,"files_used":2832,"rank":25},{"username":"r110a449","disk_gb":203.5,"files_used":19990,"rank":26},{"username":"100435315","disk_gb":191.9,"files_used":321109,"rank":27},{"username":"r504w480","disk_gb":168.0,"files_used":8805,"rank":28},{"username":"k506c250","disk_gb":129.9,"files_used":41255,"rank":29},{"username":"d797i435","disk_gb":122.6,"files_used":7383,"rank":30},{"username":"12079","disk_gb":98.98,"files_used":5831,"rank":31},{"username":"144363","disk_gb":97.05,"files_used":788,"rank":32},{"username":"a733h002","disk_gb":93.38,"files_used":5224,"rank":33},{"username":"b686w673","disk_gb":67.07,"files_used":999,"rank":34},{"username":"e059n789","disk_gb":59.95,"files_used":1690,"rank":35},{"username":"l095w344","disk_gb":57.38,"files_used":1514,"rank":36},{"username":"a265m760","disk_gb":45.56,"files_used":874,"rank":37},{"username":"m538c005","disk_gb":37.38,"files_used":2798,"rank":38},{"username":"100316509","disk_gb":36.81,"files_used":309355,"rank":39},{"username":"s953b810","disk_gb":20.44,"files_used":228013,"rank":40},{"username":"d135l135","disk_gb":18.49,"files_used":22540,"rank":41},{"username":"135273","disk_gb":17.59,"files_used":261797,"rank":42},{"username":"j306c371","disk_gb":17.4,"files_used":383547,"rank":43},{"username":"100385527","disk_gb":12.74,"files_used":322702,"rank":44},{"username":"root","disk_gb":10.95,"files_used":45337,"rank":45},{"username":"100395100","disk_gb":10.81,"files_used":708,"rank":46},{"username":"m350g339","disk_gb":8.65,"files_used":397,"rank":47},{"username":"jkarch","disk_gb":8.07,"files_used":144402,"rank":48},{"username":"d711r320","disk_gb":6.86,"files_used":117,"rank":49},{"username":"100356371","disk_gb":5.63,"files_used":5030,"rank":50},{"username":"100393729","disk_gb":5.59,"files_used":401052,"rank":51},{"username":"e379l440","disk_gb":4.95,"files_used":240,"rank":52},{"username":"100549752","disk_gb":2.83,"files_used":41732,"rank":53},{"username":"o031l418","disk_gb":2.78,"files_used":250,"rank":54},{"username":"100356619","disk_gb":1.79,"files_used":22628,"rank":55},{"username":"159799","disk_gb":0.999,"files_used":20,"rank":56},{"username":"k917r540","disk_gb":0.767,"files_used":131,"rank":57},{"username":"100361352","disk_gb":0.429,"files_used":85,"rank":58},{"username":"c447s996","disk_gb":0.316,"files_used":50,"rank":59},{"username":"100478347","disk_gb":0.043,"files_used":1422,"rank":60},{"username":"k934h127","disk_gb":0.039,"files_used":11,"rank":61},{"username":"r557e636","disk_gb":0.009,"files_used":10,"rank":62},{"username":"100428231","disk_gb":0.005,"files_used":139,"rank":63},{"username":"p470d241","disk_gb":0.003,"files_used":134,"rank":64},{"username":"p757p411","disk_gb":0.002,"files_used":34,"rank":65},{"username":"100302928","disk_gb":0.0,"files_used":2,"rank":66},{"username":"moyle","disk_gb":0.0,"files_used":8,"rank":67},{"username":"100435793","disk_gb":0.0,"files_used":18,"rank":68},{"username":"100527368","disk_gb":0.0,"files_used":6,"rank":69}];
+
+// ── chart.js defaults ─────────────────────────────────────────────────────────
+Chart.defaults.color = '#5a6a78';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const C = {
+  accent:'#ff6b4a', blue:'#5eb8ff', green:'#3dd68c', yellow:'#f5c842',
+  muted:'#5a6a78', border:'#1e262f', surface:'#0e1318', bg:'#080b10'
+};
+
+// ── bar chart ─────────────────────────────────────────────────────────────────
+let barChart, histChart;
+
+function gradientColors(ctx, count) {
+  const g = ctx.createLinearGradient(0,0,400,0);
+  g.addColorStop(0, C.yellow);
+  g.addColorStop(1, C.accent);
+  return g;
+}
+
+function buildBarChart(rows, metric) {
+  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, 30);
+  const labels = sorted.map(r => r.username);
+  const vals   = sorted.map(r => r[metric]);
+  const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
+
+  if (barChart) barChart.destroy();
+  const ctx = document.getElementById('bar-chart').getContext('2d');
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data: vals,
+        backgroundColor: gradientColors(ctx, vals.length),
+        borderWidth: 0,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: C.bg,
+          borderColor: C.border,
+          borderWidth: 1,
+          titleColor: C.blue,
+          bodyColor: C.muted,
+          callbacks: {
+            label: ctx => metric === 'disk_gb'
+              ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
+              : ` ${ctx.parsed.x.toLocaleString()} files`
+          }
+        }
+      },
+      scales: {
+        x: { grid:{color:C.border}, ticks:{color:C.muted} },
+        y: { grid:{display:false}, ticks:{color:C.blue, font:{size:10}} }
+      }
+    }
+  });
+}
+
+function buildHistChart(rows) {
+  const vals = rows.map(r => r.disk_gb).filter(v => v > 0);
+  // log10 bin it manually into ~25 buckets between 0 and 5 (1B–10TB)
+  const minLog = 0, maxLog = 5, nBins = 25;
+  const binW = (maxLog - minLog) / nBins;
+  const counts = new Array(nBins).fill(0);
+  vals.forEach(v => {
+    const b = Math.min(Math.floor((Math.log10(v) - minLog) / binW), nBins - 1);
+    if (b >= 0) counts[b]++;
+  });
+  const xlabels = Array.from({length: nBins}, (_, i) => {
+    const gb = Math.pow(10, minLog + i * binW);
+    if (gb >= 1024) return `${(gb/1024).toFixed(1)}T`;
+    if (gb >= 1)    return `${gb.toFixed(0)}G`;
+    return `${(gb*1024).toFixed(0)}M`;
+  });
+
+  if (histChart) histChart.destroy();
+  const ctx = document.getElementById('hist-chart').getContext('2d');
+  histChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: xlabels,
+      datasets: [{
+        label: 'Users',
+        data: counts,
+        backgroundColor: C.blue + 'bb',
+        borderColor: C.blue,
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: C.bg, borderColor: C.border, borderWidth: 1,
+          titleColor: C.blue, bodyColor: C.muted,
+        }
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:C.muted, maxRotation:45} },
+        y: { grid:{color:C.border}, ticks:{color:C.muted},
+             title:{display:true, text:'Users', color:C.muted} }
+      }
+    }
+  });
+}
+
+// ── table ─────────────────────────────────────────────────────────────────────
+let sortCol = 'rank', sortAsc = true;
+
+function buildTable(rows) {
+  const maxGb = Math.max(...rows.map(r => r.disk_gb), 1);
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const pct = (r.disk_gb / maxGb * 100).toFixed(1);
+    const fillCol = r.disk_gb > maxGb * .8 ? C.accent
+                  : r.disk_gb > maxGb * .4 ? C.yellow : C.green;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-rank">${r.rank}</td>
+      <td class="td-user">${r.username}</td>
+      <td class="td-disk">${r.disk_gb.toFixed(2)} GB</td>
+      <td class="td-files">${r.files_used.toLocaleString()}</td>
+      <td><div class="minibar-wrap">
+        <div class="minibar-fill" style="width:${pct}%;background:${fillCol}"></div>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── sorting ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = col === 'username'; }
+    document.querySelectorAll('thead th').forEach(t => {
+      t.classList.remove('sorted');
+      const arr = t.querySelector('.sort-arrow');
+      if (arr) arr.textContent = '↕';
+    });
+    th.classList.add('sorted');
+    const arr = th.querySelector('.sort-arrow');
+    if (arr) arr.textContent = sortAsc ? '↑' : '↓';
+    render();
+  });
+});
+
+// ── main render ───────────────────────────────────────────────────────────────
+function render() {
+  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 25;
+  const minGb = parseFloat(document.getElementById('ctrl-mingb').value) || 0;
+  const metric = document.getElementById('ctrl-metric').value;
+
+  let rows = ALL_ROWS.filter(r => r.disk_gb >= minGb);
+
+  // sort for table
+  rows.sort((a, b) => {
+    const av = a[sortCol], bv = b[sortCol];
+    if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return sortAsc ? av - bv : bv - av;
+  });
+  const tableRows = rows.slice(0, topN);
+  buildTable(tableRows);
+
+  // charts use top-N by disk regardless of table sort
+  const chartRows = [...rows].sort((a,b) => b.disk_gb - a.disk_gb).slice(0, topN);
+  buildBarChart(chartRows, metric);
+  buildHistChart(ALL_ROWS); // histogram always uses full dataset
+}
+
+// ── usage bar colour ──────────────────────────────────────────────────────────
+(function(){
+  const pct = 98;
+  const bar = document.getElementById('main-bar');
+  const col = pct >= 95 ? '#ff6b4a' : pct >= 85 ? '#f5c842' : '#3dd68c';
+  bar.style.background = col;
+})();
+
+// ── controls ──────────────────────────────────────────────────────────────────
+['ctrl-topn','ctrl-mingb','ctrl-metric'].forEach(id =>
+  document.getElementById(id).addEventListener('input', render));
+
+// ── init ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
