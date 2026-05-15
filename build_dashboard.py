@@ -55,11 +55,13 @@ def parse_usage(path: Path) -> list[dict]:
 
 def parse_summary(path: Path) -> dict:
     out = {"updated": "unknown", "total": "—", "used": "—",
-           "avail": "—", "pct": "—", "pct_num": 0, "allotment": "—"}
+           "avail": "—", "pct": "—", "pct_num": 0, "allotment": "—",
+           "allotments": []}  # list of {label, gb} for reference lines
     if not path.exists():
         print(f"WARNING: {path} not found", file=sys.stderr)
         return out
-    for line in path.read_text().splitlines():
+    lines = path.read_text().splitlines()
+    for i, line in enumerate(lines):
         if line.startswith("Updated:"):
             out["updated"] = line.replace("Updated:", "").strip()
         m = re.match(r"^(\d+\S*)\s+(\d+\S*)\s+(\S+)\s+(\d+)%", line)
@@ -67,10 +69,21 @@ def parse_summary(path: Path) -> dict:
             out["total"], out["used"], out["avail"] = m.group(1), m.group(2), m.group(3)
             out["pct"] = f"{m.group(4)}%"
             out["pct_num"] = int(m.group(4))
-        if "allotment =" in line:
-            vals = re.findall(r"\d+GB", line)
-            if vals:
-                out["allotment"] = vals[0]
+        # header row: "per current # users >=  1GB  10GB  100GB  1000GB"
+        if "per current # users" in line:
+            thresholds = re.findall(r"\d+GB", line)
+            # next non-empty line has the allotment values
+            for next_line in lines[i+1:]:
+                if "allotment =" in next_line:
+                    vals = re.findall(r"[\d.]+GB", next_line)
+                    if vals:
+                        out["allotment"] = vals[0]  # >=1GB tier for the tile
+                    # pair each threshold label with its allotment value
+                    out["allotments"] = [
+                        {"label": f"≥{t} share", "gb": to_gb(v)}
+                        for t, v in zip(thresholds, vals)
+                    ]
+                    break
     return out
 
 
@@ -232,7 +245,7 @@ footer a:hover{color:var(--blue)}
 <div class="controls">
   <div class="ctrl-group">
     <label>Top N users</label>
-    <input type="number" id="ctrl-topn" value="25" min="5" max="500" style="width:80px"/>
+    <input type="number" id="ctrl-topn" value="30" min="5" max="500" style="width:80px"/>
   </div>
   <div class="ctrl-group">
     <label>Min disk (GB)</label>
@@ -278,6 +291,7 @@ footer a:hover{color:var(--blue)}
 <script>
 // ── embedded data ─────────────────────────────────────────────────────────────
 const ALL_ROWS = __JSON_DATA__;
+const ALLOTMENTS = __ALLOTMENTS__;  // [{label, gb}, ...] for >=1/10/100/1000GB tiers
 
 // ── chart.js defaults ─────────────────────────────────────────────────────────
 Chart.defaults.color = '#5a6a78';
@@ -292,41 +306,68 @@ const C = {
 // ── bar chart ─────────────────────────────────────────────────────────────────
 let barChart;
 
-function gradientColors(ctx, count) {
-  const g = ctx.createLinearGradient(0,0,400,0);
-  g.addColorStop(0, C.yellow);
-  g.addColorStop(1, C.accent);
-  return g;
-}
-
 function buildBarChart(rows, metric) {
-  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, 30);
+  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]);
   const labels = sorted.map(r => r.username);
   const vals   = sorted.map(r => r[metric]);
   const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
 
+  // reference line colours — muted so they don't fight the bars
+  const refColors = ['#3dd68c','#5eb8ff','#f5c842','#ff6b4a'];
+
+  // annotation-style reference lines as extra datasets (scatter points at each label)
+  const refDatasets = metric === 'disk_gb' ? ALLOTMENTS.map((a, i) => ({
+    label: a.label,
+    data: labels.map(() => a.gb),
+    type: 'line',
+    borderColor: refColors[i % refColors.length],
+    borderWidth: 1.5,
+    borderDash: [4, 3],
+    pointRadius: 0,
+    fill: false,
+    tension: 0,
+  })) : [];
+
   if (barChart) barChart.destroy();
   const ctx = document.getElementById('bar-chart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,400,0);
+  grad.addColorStop(0, C.yellow);
+  grad.addColorStop(1, C.accent);
+
   barChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label,
-        data: vals,
-        backgroundColor: gradientColors(ctx, vals.length),
-        borderWidth: 0,
-        borderRadius: 3,
-      }]
+      datasets: [
+        {
+          label,
+          data: vals,
+          backgroundColor: grad,
+          borderWidth: 0,
+          borderRadius: 3,
+          order: 1,
+        },
+        ...refDatasets.map(d => ({...d, order: 0})),
+      ]
     },
     options: {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      maintainAspectRatio: false,
       animation: { duration: 500, easing: 'easeOutQuart' },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: refDatasets.length > 0,
+          position: 'top',
+          align: 'end',
+          labels: {
+            color: C.muted,
+            font: { size: 10 },
+            boxWidth: 20,
+            boxHeight: 1,
+            filter: item => item.text !== label,  // hide bar dataset from legend
+          }
+        },
         tooltip: {
           backgroundColor: C.bg,
           borderColor: C.border,
@@ -334,9 +375,13 @@ function buildBarChart(rows, metric) {
           titleColor: C.blue,
           bodyColor: C.muted,
           callbacks: {
-            label: ctx => metric === 'disk_gb'
-              ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
-              : ` ${ctx.parsed.x.toLocaleString()} files`
+            label: ctx => {
+              if (ctx.dataset.type === 'line')
+                return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:0})} GB`;
+              return metric === 'disk_gb'
+                ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
+                : ` ${ctx.parsed.x.toLocaleString()} files`;
+            }
           }
         }
       },
@@ -392,23 +437,22 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 // ── main render ───────────────────────────────────────────────────────────────
 function render() {
-  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 25;
+  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 30;
   const minGb = parseFloat(document.getElementById('ctrl-mingb').value) || 0;
   const metric = document.getElementById('ctrl-metric').value;
 
   let rows = ALL_ROWS.filter(r => r.disk_gb >= minGb);
 
-  // sort for table
-  rows.sort((a, b) => {
+  // table always shows all filtered rows, sorted by chosen column
+  const tableRows = [...rows].sort((a, b) => {
     const av = a[sortCol], bv = b[sortCol];
     if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return sortAsc ? av - bv : bv - av;
   });
-  const tableRows = rows.slice(0, topN);
   buildTable(tableRows);
 
-  // charts use top-N by disk regardless of table sort
-  const chartRows = [...rows].sort((a,b) => b.disk_gb - a.disk_gb).slice(0, topN);
+  // chart shows top-N by disk (or files) regardless of table sort
+  const chartRows = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, topN);
   buildBarChart(chartRows, metric);
 }
 
@@ -450,7 +494,8 @@ def build(data_dir: Path, out_path: Path):
     html = html.replace("__PCT_NUM__",  str(summ["pct_num"]))
     html = html.replace("__USERS__",    str(len(rows)))
     html = html.replace("__ALLOT__",    summ["allotment"])
-    html = html.replace("__JSON_DATA__", json.dumps(rows, separators=(",", ":")))
+    html = html.replace("__JSON_DATA__",  json.dumps(rows, separators=(",", ":")))
+    html = html.replace("__ALLOTMENTS__", json.dumps(summ["allotments"], separators=(",", ":")))
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
