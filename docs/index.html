@@ -69,9 +69,8 @@ header{
 .ctrl-group input:focus,.ctrl-group select:focus{border-color:var(--blue)}
 select option{background:var(--surface2)}
 
-/* ── main grid ── */
-.grid{display:grid;grid-template-columns:2fr 1.1fr;gap:14px;padding:16px 36px 0}
-@media(max-width:780px){.grid{grid-template-columns:1fr}}
+/* ── main chart panel ── */
+.chart-wrap{padding:16px 36px 0}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px}
 .panel-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
   color:var(--blue);margin-bottom:14px}
@@ -120,7 +119,7 @@ footer a:hover{color:var(--blue)}
   <div class="logo">BI<span>.</span>storage</div>
   <div class="meta">
     <div>Updated: <b id="ts-updated">Thu May 14 19:30:45 CDT 2026</b></div>
-    <div>Built: <b id="ts-built">2026-05-15 21:48 UTC</b></div>
+    <div>Built: <b id="ts-built">2026-05-15 22:01 UTC</b></div>
   </div>
 </header>
 
@@ -169,14 +168,10 @@ footer a:hover{color:var(--blue)}
   </div>
 </div>
 
-<div class="grid">
+<div class="chart-wrap">
   <div class="panel">
     <div class="panel-title">Top Users</div>
     <canvas id="bar-chart" height="340"></canvas>
-  </div>
-  <div class="panel">
-    <div class="panel-title">Distribution (log scale)</div>
-    <canvas id="hist-chart" height="340"></canvas>
   </div>
 </div>
 
@@ -216,7 +211,7 @@ const C = {
 };
 
 // ── bar chart ─────────────────────────────────────────────────────────────────
-let barChart, histChart;
+let barChart;
 
 function gradientColors(ctx, count) {
   const g = ctx.createLinearGradient(0,0,400,0);
@@ -268,58 +263,6 @@ function buildBarChart(rows, metric) {
       scales: {
         x: { grid:{color:C.border}, ticks:{color:C.muted} },
         y: { grid:{display:false}, ticks:{color:C.blue, font:{size:10}} }
-      }
-    }
-  });
-}
-
-function buildHistChart(rows) {
-  const vals = rows.map(r => r.disk_gb).filter(v => v > 0);
-  // log10 bin it manually into ~25 buckets between 0 and 5 (1B–10TB)
-  const minLog = 0, maxLog = 5, nBins = 25;
-  const binW = (maxLog - minLog) / nBins;
-  const counts = new Array(nBins).fill(0);
-  vals.forEach(v => {
-    const b = Math.min(Math.floor((Math.log10(v) - minLog) / binW), nBins - 1);
-    if (b >= 0) counts[b]++;
-  });
-  const xlabels = Array.from({length: nBins}, (_, i) => {
-    const gb = Math.pow(10, minLog + i * binW);
-    if (gb >= 1024) return `${(gb/1024).toFixed(1)}T`;
-    if (gb >= 1)    return `${gb.toFixed(0)}G`;
-    return `${(gb*1024).toFixed(0)}M`;
-  });
-
-  if (histChart) histChart.destroy();
-  const ctx = document.getElementById('hist-chart').getContext('2d');
-  histChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: xlabels,
-      datasets: [{
-        label: 'Users',
-        data: counts,
-        backgroundColor: C.blue + 'bb',
-        borderColor: C.blue,
-        borderWidth: 1,
-        borderRadius: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 500 },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: C.bg, borderColor: C.border, borderWidth: 1,
-          titleColor: C.blue, bodyColor: C.muted,
-        }
-      },
-      scales: {
-        x: { grid:{display:false}, ticks:{color:C.muted, maxRotation:45} },
-        y: { grid:{color:C.border}, ticks:{color:C.muted},
-             title:{display:true, text:'Users', color:C.muted} }
       }
     }
   });
@@ -387,7 +330,6 @@ function render() {
   // charts use top-N by disk regardless of table sort
   const chartRows = [...rows].sort((a,b) => b.disk_gb - a.disk_gb).slice(0, topN);
   buildBarChart(chartRows, metric);
-  buildHistChart(ALL_ROWS); // histogram always uses full dataset
 }
 
 // ── usage bar colour ──────────────────────────────────────────────────────────
