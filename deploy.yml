@@ -1,0 +1,38 @@
+name: Build & Deploy Storage Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "usage.txt"
+      - "clean_usage.txt"
+      - "build_dashboard.py"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:   # lets you trigger manually from the GitHub UI
+
+permissions:
+  contents: write      # needed to push the built docs/ folder
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build dashboard
+        run: python build_dashboard.py --data-dir . --out docs/index.html
+
+      - name: Commit and push docs/
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          # only commit if the file actually changed
+          git diff --cached --quiet || git commit -m "chore: rebuild dashboard [skip ci]"
+          git push

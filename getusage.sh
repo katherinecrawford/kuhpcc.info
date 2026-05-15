@@ -7,8 +7,8 @@
 #SBATCH --chdir=/home/k506c250/work/kuhpcc.info
 #SBATCH --mem=1000
 #SBATCH --time=10
-#SBATCH --mail-type=FAIL,TIMEOUT
-#SBATCH --mail-user=kjcrawford@ku.edu
+# #SBATCH --mail-type=FAIL,TIMEOUT
+# #SBATCH --mail-user=kjcrawford@ku.edu
 
 # this script runs every hour on the 45 minute mark using cron
 # crontab -e:
