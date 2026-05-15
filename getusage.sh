@@ -19,6 +19,7 @@ set -e
 cd /home/k506c250/work/kuhpcc.info || exit 1
 
 # cleanup stale git locks and old slurm files
+find .git -name "*.lock" -delete 2>/dev/null || true
 find .git -type f -name "*.lock" -delete 2>/dev/null || true
 ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm -f 2>/dev/null || true
 
