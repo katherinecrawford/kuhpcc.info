@@ -150,6 +150,7 @@ select option{background:var(--surface2)}
 /* ── main chart panel ── */
 .chart-wrap{padding:16px 36px 0}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px}
+.chart-container{position:relative;height:420px}
 .panel-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
   color:var(--blue);margin-bottom:14px}
 
@@ -249,7 +250,7 @@ footer a:hover{color:var(--blue)}
 <div class="chart-wrap">
   <div class="panel">
     <div class="panel-title">Top Users</div>
-    <canvas id="bar-chart" height="340"></canvas>
+    <div class="chart-container"><canvas id="bar-chart"></canvas></div>
   </div>
 </div>
 
@@ -321,6 +322,7 @@ function buildBarChart(rows, metric) {
     options: {
       indexAxis: 'y',
       responsive: true,
+      maintainAspectRatio: false,
       maintainAspectRatio: false,
       animation: { duration: 500, easing: 'easeOutQuart' },
       plugins: {
