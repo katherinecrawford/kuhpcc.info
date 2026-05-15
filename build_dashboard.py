@@ -224,10 +224,10 @@ footer a:hover{color:var(--blue)}
     <div class="tile-value c-green">__AVAIL__</div></div>
   <div class="tile"><div class="tile-label">Utilisation</div>
     <div class="tile-value c-accent">__PCT__</div></div>
-  <div class="tile"><div class="tile-label">Active Users</div>
-    <div class="tile-value c-blue">__USERS__</div></div>
-  <div class="tile"><div class="tile-label">Allotment</div>
-    <div class="tile-value c-green">__ALLOT__</div></div>
+  <div class="tile"><div class="tile-label">Users</div>
+    <div class="tile-value c-green">__USERS__</div></div>
+  <div class="tile"><div class="tile-label">Equal Allotment</div>
+    <div class="tile-value c-blue">__ALLOT__</div></div>
 </div>
 
 <div class="bar-section">
@@ -313,7 +313,7 @@ function buildBarChart(rows, metric) {
   const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
 
   // reference line colours — muted so they don't fight the bars
-  const refColors = ['#3dd68c','#5eb8ff','#f5c842','#ff6b4a'];
+  const refColors = ['#5eb8ff','#3dd68c','#f5c842','#ff6b4a'];
 
   // annotation-style reference lines as extra datasets (scatter points at each label)
   const refDatasets = metric === 'disk_gb' ? ALLOTMENTS.map((a, i) => ({
@@ -396,14 +396,21 @@ function buildBarChart(rows, metric) {
 // ── table ─────────────────────────────────────────────────────────────────────
 let sortCol = 'rank', sortAsc = true;
 
+function tierColor(gb) {
+  if (gb >= 1000) return C.accent;   // red
+  if (gb >= 100)  return C.yellow;   // yellow
+  if (gb >= 10)   return C.green;    // green
+  if (gb >= 1)    return C.blue;     // blue
+  return C.muted;
+}
+
 function buildTable(rows) {
-  const maxGb = Math.max(...rows.map(r => r.disk_gb), 1);
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
   rows.forEach(r => {
+    const maxGb = Math.max(...ALL_ROWS.map(x => x.disk_gb), 1);
     const pct = (r.disk_gb / maxGb * 100).toFixed(1);
-    const fillCol = r.disk_gb > maxGb * .8 ? C.accent
-                  : r.disk_gb > maxGb * .4 ? C.yellow : C.green;
+    const fillCol = tierColor(r.disk_gb);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="td-rank">${r.rank}</td>
