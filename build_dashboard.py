@@ -307,17 +307,21 @@ const C = {
 let barChart;
 
 function buildBarChart(rows, metric) {
-  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]);
+  // cap rows so every label fits — Chart.js horizontal bars need ~14px per row
+  const chartHeight = 420;
+  const pxPerRow = 14;
+  const maxFit = Math.floor(chartHeight / pxPerRow);
+  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, maxFit);
   const labels = sorted.map(r => r.username);
   const vals   = sorted.map(r => r[metric]);
   const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
 
-  // reference line colours — muted so they don't fight the bars
+  // reference line colours: blue, green, yellow, red
   const refColors = ['#5eb8ff','#3dd68c','#f5c842','#ff6b4a'];
 
-  // annotation-style reference lines as extra datasets (scatter points at each label)
+  // include the actual GB threshold in the legend label
   const refDatasets = metric === 'disk_gb' ? ALLOTMENTS.map((a, i) => ({
-    label: a.label,
+    label: `${a.label} (${a.gb.toLocaleString(undefined,{maximumFractionDigits:0})} GB)`,
     data: labels.map(() => a.gb),
     type: 'line',
     borderColor: refColors[i % refColors.length],
@@ -396,11 +400,14 @@ function buildBarChart(rows, metric) {
 // ── table ─────────────────────────────────────────────────────────────────────
 let sortCol = 'rank', sortAsc = true;
 
+// tierColor: colour based on actual allotment thresholds (highest tier first)
 function tierColor(gb) {
-  if (gb >= 1000) return C.accent;   // red
-  if (gb >= 100)  return C.yellow;   // yellow
-  if (gb >= 10)   return C.green;    // green
-  if (gb >= 1)    return C.blue;     // blue
+  // ALLOTMENTS is ordered >=1GB, >=10GB, >=100GB, >=1000GB → colours blue,green,yellow,red
+  const colors = ['#5eb8ff','#3dd68c','#f5c842','#ff6b4a'];
+  // walk from highest tier down
+  for (let i = ALLOTMENTS.length - 1; i >= 0; i--) {
+    if (gb >= ALLOTMENTS[i].gb) return colors[i];
+  }
   return C.muted;
 }
 
@@ -458,8 +465,8 @@ function render() {
   });
   buildTable(tableRows);
 
-  // chart shows top-N by disk (or files) regardless of table sort
-  const chartRows = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, topN);
+  // chart passes all filtered rows; buildBarChart caps to what fits
+  const chartRows = [...rows].sort((a,b) => b[metric] - a[metric]);
   buildBarChart(chartRows, metric);
 }
 
