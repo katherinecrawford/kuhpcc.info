@@ -148,17 +148,7 @@ header{
 .bar-track{background:var(--border2);border-radius:4px;height:12px;overflow:hidden}
 .bar-fill{height:12px;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)}
 
-/* ── controls ── */
-.controls{display:flex;gap:12px;padding:20px 36px 0;flex-wrap:wrap;align-items:flex-end}
-.ctrl-group label{display:block;font-size:.6rem;color:var(--muted);text-transform:uppercase;
-  letter-spacing:.1em;margin-bottom:5px}
-.ctrl-group input,.ctrl-group select{
-  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
-  font-family:var(--mono);font-size:.82rem;padding:7px 11px;border-radius:6px;outline:none;
-  transition:border-color .15s;
-}
-.ctrl-group input:focus,.ctrl-group select:focus{border-color:var(--blue)}
-select option{background:var(--surface2)}
+
 
 /* ── main chart panel ── */
 .chart-wrap{padding:16px 36px 0}
@@ -242,24 +232,6 @@ footer a:hover{color:var(--blue)}
   </div>
 </div>
 
-<div class="controls">
-  <div class="ctrl-group">
-    <label>Top N users</label>
-    <input type="number" id="ctrl-topn" value="30" min="5" max="500" style="width:80px"/>
-  </div>
-  <div class="ctrl-group">
-    <label>Min disk (GB)</label>
-    <input type="number" id="ctrl-mingb" value="0" min="0" style="width:95px"/>
-  </div>
-  <div class="ctrl-group">
-    <label>Chart metric</label>
-    <select id="ctrl-metric">
-      <option value="disk_gb">Disk Used</option>
-      <option value="files_used">Files Used</option>
-    </select>
-  </div>
-</div>
-
 <div class="chart-wrap">
   <div class="panel">
     <div class="panel-title">Top Users</div>
@@ -307,11 +279,8 @@ const C = {
 let barChart;
 
 function buildBarChart(rows, metric) {
-  // cap rows so every label fits — Chart.js horizontal bars need ~14px per row
-  const chartHeight = 420;
-  const pxPerRow = 14;
-  const maxFit = Math.floor(chartHeight / pxPerRow);
-  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, maxFit);
+  const TOP_N = 25;
+  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, TOP_N);
   const labels = sorted.map(r => r.username);
   const vals   = sorted.map(r => r[metric]);
   const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
@@ -338,6 +307,10 @@ function buildBarChart(rows, metric) {
   grad.addColorStop(0, C.yellow);
   grad.addColorStop(1, C.accent);
 
+  // barThickness forces Chart.js to allocate enough vertical space per row
+  // so it never has reason to skip a label
+  const barThickness = Math.floor(380 / TOP_N);
+
   barChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -348,7 +321,8 @@ function buildBarChart(rows, metric) {
           data: vals,
           backgroundColor: grad,
           borderWidth: 0,
-          borderRadius: 3,
+          borderRadius: 2,
+          barThickness,
           order: 1,
         },
         ...refDatasets.map(d => ({...d, order: 0})),
@@ -369,7 +343,7 @@ function buildBarChart(rows, metric) {
             font: { size: 10 },
             boxWidth: 20,
             boxHeight: 1,
-            filter: item => item.text !== label,  // hide bar dataset from legend
+            filter: item => item.text !== label,
           }
         },
         tooltip: {
@@ -391,7 +365,7 @@ function buildBarChart(rows, metric) {
       },
       scales: {
         x: { grid:{color:C.border}, ticks:{color:C.muted} },
-        y: { grid:{display:false}, ticks:{color:C.blue, font:{size:10}} }
+        y: { grid:{display:false}, ticks:{color:C.blue, font:{size:10}, autoSkip:false} }
       }
     }
   });
@@ -451,23 +425,12 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 // ── main render ───────────────────────────────────────────────────────────────
 function render() {
-  const topN  = parseInt(document.getElementById('ctrl-topn').value)  || 30;
-  const minGb = parseFloat(document.getElementById('ctrl-mingb').value) || 0;
-  const metric = document.getElementById('ctrl-metric').value;
-
-  let rows = ALL_ROWS.filter(r => r.disk_gb >= minGb);
-
-  // table always shows all filtered rows, sorted by chosen column
-  const tableRows = [...rows].sort((a, b) => {
+  buildTable([...ALL_ROWS].sort((a, b) => {
     const av = a[sortCol], bv = b[sortCol];
     if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return sortAsc ? av - bv : bv - av;
-  });
-  buildTable(tableRows);
-
-  // chart passes all filtered rows; buildBarChart caps to what fits
-  const chartRows = [...rows].sort((a,b) => b[metric] - a[metric]);
-  buildBarChart(chartRows, metric);
+  }));
+  buildBarChart(ALL_ROWS, 'disk_gb');
 }
 
 // ── usage bar colour ──────────────────────────────────────────────────────────
@@ -477,10 +440,6 @@ function render() {
   const col = pct >= 95 ? '#ff6b4a' : pct >= 85 ? '#f5c842' : '#3dd68c';
   bar.style.background = col;
 })();
-
-// ── controls ──────────────────────────────────────────────────────────────────
-['ctrl-topn','ctrl-mingb','ctrl-metric'].forEach(id =>
-  document.getElementById(id).addEventListener('input', render));
 
 // ── init ─────────────────────────────────────────────────────────────────────
 render();
