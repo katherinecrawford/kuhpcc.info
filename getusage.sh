@@ -37,6 +37,8 @@ if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; the
     exit 0
 fi
 
+cp /kuhpc/work/bi/usage.txt .
+
 # create a cleaned usage file with summary information
 {
   # introductory information
