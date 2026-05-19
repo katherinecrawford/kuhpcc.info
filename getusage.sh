@@ -108,6 +108,9 @@ cp /kuhpc/work/bi/usage.txt .
   ' OFS='\t' | sort -k2 -r -g | awk 'BEGIN{num=1} {print num++, $0}' OFS='\t'
 } > clean_usage.txt
 
+rm /home/k506c250/work/kuhpcc.info/.git/HEAD.lock
+find .git -name "*.lock" -delete 2>/dev/null || true
+
 # push to github
 cd /home/k506c250/work/kuhpcc.info
 git add clean_usage.txt
