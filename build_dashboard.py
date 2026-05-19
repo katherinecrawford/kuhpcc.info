@@ -147,9 +147,6 @@ header{
 .bar-pct{font-family:var(--display);font-size:1.1rem;font-weight:700;color:var(--text)}
 .bar-track{background:var(--border2);border-radius:4px;height:12px;overflow:hidden}
 .bar-fill{height:12px;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)}
-
-
-
 /* ── main chart panel ── */
 .chart-wrap{padding:16px 36px 0}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px}
@@ -193,15 +190,23 @@ footer{padding:16px 36px;font-size:.65rem;color:var(--muted);border-top:1px soli
   margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 footer a{color:var(--muted);text-decoration:none}
 footer a:hover{color:var(--blue)}
+/* ── stale data warning ── */
+.stale-warn{display:none;background:#3a0d0d;border:1px solid var(--accent);
+  color:var(--accent);font-size:.65rem;padding:4px 10px;border-radius:4px;
+  font-family:var(--mono);white-space:nowrap;align-self:center}
+.stale-warn.visible{display:inline-block}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">BI<span>.</span>storage</div>
-  <div class="meta">
-    <div>Updated: <b id="ts-updated">__UPDATED__</b></div>
-    <div>Built: <b id="ts-built">__BUILT__</b></div>
+  <div class="meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+    <span class="stale-warn" id="stale-warn">⚠ Warning: data may be outdated</span>
+    <div style="text-align:right">
+      <div>Updated: <b>__UPDATED__</b></div>
+      <div>Built: <b>__BUILT__</b></div>
+    </div>
   </div>
 </header>
 
@@ -278,18 +283,14 @@ const C = {
 // ── bar chart ─────────────────────────────────────────────────────────────────
 let barChart;
 
-function buildBarChart(rows, metric) {
+function buildBarChart(rows) {
   const TOP_N = 25;
-  const sorted = [...rows].sort((a,b) => b[metric] - a[metric]).slice(0, TOP_N);
+  const sorted = [...rows].sort((a, b) => b.disk_gb - a.disk_gb).slice(0, TOP_N);
   const labels = sorted.map(r => r.username);
-  const vals   = sorted.map(r => r[metric]);
-  const label  = metric === 'disk_gb' ? 'Disk (GB)' : 'Files';
+  const vals   = sorted.map(r => r.disk_gb);
 
-  // reference line colours: blue, green, yellow, red
   const refColors = ['#5eb8ff','#3dd68c','#f5c842','#ff6b4a'];
-
-  // include the actual GB threshold in the legend label
-  const refDatasets = metric === 'disk_gb' ? ALLOTMENTS.map((a, i) => ({
+  const refDatasets = ALLOTMENTS.map((a, i) => ({
     label: `${a.label} (${a.gb.toLocaleString(undefined,{maximumFractionDigits:0})} GB)`,
     data: labels.map(() => a.gb),
     type: 'line',
@@ -299,17 +300,14 @@ function buildBarChart(rows, metric) {
     pointRadius: 0,
     fill: false,
     tension: 0,
-  })) : [];
+    order: 0,
+  }));
 
   if (barChart) barChart.destroy();
   const ctx = document.getElementById('bar-chart').getContext('2d');
-  const grad = ctx.createLinearGradient(0,0,400,0);
+  const grad = ctx.createLinearGradient(0, 0, 400, 0);
   grad.addColorStop(0, C.yellow);
   grad.addColorStop(1, C.accent);
-
-  // barThickness forces Chart.js to allocate enough vertical space per row
-  // so it never has reason to skip a label
-  const barThickness = Math.floor(380 / TOP_N);
 
   barChart = new Chart(ctx, {
     type: 'bar',
@@ -317,15 +315,16 @@ function buildBarChart(rows, metric) {
       labels,
       datasets: [
         {
-          label,
+          label: 'Disk (GB)',
           data: vals,
           backgroundColor: grad,
           borderWidth: 0,
           borderRadius: 2,
-          barThickness,
+          categoryPercentage: 0.6,  // 60% of slot used by bar group → 40% gap
+          barPercentage: 1.0,        // bar fills its group fully
           order: 1,
         },
-        ...refDatasets.map(d => ({...d, order: 0})),
+        ...refDatasets,
       ]
     },
     options: {
@@ -335,7 +334,7 @@ function buildBarChart(rows, metric) {
       animation: { duration: 500, easing: 'easeOutQuart' },
       plugins: {
         legend: {
-          display: refDatasets.length > 0,
+          display: true,
           position: 'top',
           align: 'end',
           labels: {
@@ -343,7 +342,7 @@ function buildBarChart(rows, metric) {
             font: { size: 10 },
             boxWidth: 20,
             boxHeight: 1,
-            filter: item => item.text !== label,
+            filter: item => item.text !== 'Disk (GB)',
           }
         },
         tooltip: {
@@ -355,10 +354,8 @@ function buildBarChart(rows, metric) {
           callbacks: {
             label: ctx => {
               if (ctx.dataset.type === 'line')
-                return ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:0})} GB`;
-              return metric === 'disk_gb'
-                ? ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`
-                : ` ${ctx.parsed.x.toLocaleString()} files`;
+                return ` ${ctx.dataset.label}`;
+              return ` ${ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:1})} GB`;
             }
           }
         }
@@ -374,11 +371,9 @@ function buildBarChart(rows, metric) {
 // ── table ─────────────────────────────────────────────────────────────────────
 let sortCol = 'rank', sortAsc = true;
 
-// tierColor: colour based on actual allotment thresholds (highest tier first)
+// colour based on actual allotment thresholds, highest tier first
 function tierColor(gb) {
-  // ALLOTMENTS is ordered >=1GB, >=10GB, >=100GB, >=1000GB → colours blue,green,yellow,red
   const colors = ['#5eb8ff','#3dd68c','#f5c842','#ff6b4a'];
-  // walk from highest tier down
   for (let i = ALLOTMENTS.length - 1; i >= 0; i--) {
     if (gb >= ALLOTMENTS[i].gb) return colors[i];
   }
@@ -386,12 +381,11 @@ function tierColor(gb) {
 }
 
 function buildTable(rows) {
+  const maxGb = Math.max(...ALL_ROWS.map(x => x.disk_gb), 1);  // hoisted — constant for all rows
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
   rows.forEach(r => {
-    const maxGb = Math.max(...ALL_ROWS.map(x => x.disk_gb), 1);
     const pct = (r.disk_gb / maxGb * 100).toFixed(1);
-    const fillCol = tierColor(r.disk_gb);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="td-rank">${r.rank}</td>
@@ -399,7 +393,7 @@ function buildTable(rows) {
       <td class="td-disk">${r.disk_gb.toFixed(2)} GB</td>
       <td class="td-files">${r.files_used.toLocaleString()}</td>
       <td><div class="minibar-wrap">
-        <div class="minibar-fill" style="width:${pct}%;background:${fillCol}"></div>
+        <div class="minibar-fill" style="width:${pct}%;background:${tierColor(r.disk_gb)}"></div>
       </div></td>`;
     tbody.appendChild(tr);
   });
@@ -417,11 +411,28 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
       if (arr) arr.textContent = '↕';
     });
     th.classList.add('sorted');
-    const arr = th.querySelector('.sort-arrow');
-    if (arr) arr.textContent = sortAsc ? '↑' : '↓';
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = sortAsc ? '↑' : '↓';
     render();
   });
 });
+
+// ── stale data warning ────────────────────────────────────────────────────────
+(function() {
+  const updated = '__UPDATED__';
+  // parse the timestamp — format: "Thu May 14 19:30:45 CDT 2026"
+  const parsed = Date.parse(updated);
+  if (!isNaN(parsed) && (Date.now() - parsed) > 12 * 60 * 60 * 1000) {
+    document.getElementById('stale-warn').classList.add('visible');
+  }
+})();
+
+// ── usage bar colour ──────────────────────────────────────────────────────────
+(function() {
+  const pct = __PCT_NUM__;
+  const col = pct >= 95 ? '#ff6b4a' : pct >= 85 ? '#f5c842' : '#3dd68c';
+  document.getElementById('main-bar').style.background = col;
+})();
 
 // ── main render ───────────────────────────────────────────────────────────────
 function render() {
@@ -430,16 +441,8 @@ function render() {
     if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     return sortAsc ? av - bv : bv - av;
   }));
-  buildBarChart(ALL_ROWS, 'disk_gb');
+  buildBarChart(ALL_ROWS);
 }
-
-// ── usage bar colour ──────────────────────────────────────────────────────────
-(function(){
-  const pct = __PCT_NUM__;
-  const bar = document.getElementById('main-bar');
-  const col = pct >= 95 ? '#ff6b4a' : pct >= 85 ? '#f5c842' : '#3dd68c';
-  bar.style.background = col;
-})();
 
 // ── init ─────────────────────────────────────────────────────────────────────
 render();

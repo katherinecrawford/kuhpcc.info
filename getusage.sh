@@ -18,6 +18,8 @@ set -e
 
 cd /home/k506c250/work/kuhpcc.info || exit 1
 
+cp /kuhpc/work/bi/usage.txt .
+
 # cleanup stale git locks and old slurm files
 find .git -name "*.lock" -delete 2>/dev/null || true
 find .git -type f -name "*.lock" -delete 2>/dev/null || true
@@ -34,8 +36,6 @@ if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; the
     find .git -name "*.lock" -delete 2>/dev/null || true
     exit 0
 fi
-
-cp /kuhpc/work/bi/usage.txt .
 
 # create a cleaned usage file with summary information
 {
