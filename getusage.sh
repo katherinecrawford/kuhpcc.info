@@ -120,5 +120,7 @@ git diff --cached --quiet && echo "Nothing to commit, skipping." && exit 0
 git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M')"
 git push origin main
 
+find .git -name "*.lock" -delete 2>/dev/null || true
+
 # github repo: https://github.com/katherinecrawford/kuhpcc.info
 # file: https://github.com/katherinecrawford/kuhpcc.info/blob/main/clean_usage.txt
