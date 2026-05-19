@@ -109,6 +109,7 @@ cp /kuhpc/work/bi/usage.txt .
 } > clean_usage.txt
 
 rm /home/k506c250/work/kuhpcc.info/.git/HEAD.lock
+rm /home/k506c250/work/kuhpcc.info/.git/index.lock
 find .git -name "*.lock" -delete 2>/dev/null || true
 
 # push to github
