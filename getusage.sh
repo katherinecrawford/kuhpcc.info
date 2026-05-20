@@ -1,4 +1,4 @@
-\#!/bin/bash
+#!/bin/bash
 
 #SBATCH --job-name=get.data
 #SBATCH --nodes=1
