@@ -35,11 +35,11 @@ find .git -name "*.lock" -delete 2>/dev/null || true
 echo "sync"
 
 # check if source usage.txt was modified in the last 2 hours
-if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; then
-    echo "Source usage.txt is stale, skipping update."
-    find .git -name "*.lock" -delete 2>/dev/null || true
-    exit 0
-fi
+#if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; then
+#    echo "Source usage.txt is stale, skipping update."
+#    find .git -name "*.lock" -delete 2>/dev/null || true
+#    exit 0
+#fi
 
 cp /kuhpc/work/bi/usage.txt .
 
