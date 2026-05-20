@@ -14,7 +14,7 @@
 # crontab -e:
 # 45 * * * * flock -n /tmp/kuhpcc.lock sbatch /home/k506c250/work/kuhpcc.info/getusage.sh
 
-set -e
+#set -e
 
 cd /home/k506c250/work/kuhpcc.info || exit 1
 
