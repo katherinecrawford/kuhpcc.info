@@ -1,4 +1,4 @@
-#!/bin/bash
+\#!/bin/bash
 
 #SBATCH --job-name=get.data
 #SBATCH --nodes=1
@@ -25,10 +25,14 @@ find .git -name "*.lock" -delete 2>/dev/null || true
 find .git -type f -name "*.lock" -delete 2>/dev/null || true
 ls -1t slurm-* 2>/dev/null | tail -n +2 | xargs -r rm -f 2>/dev/null || true
 
+echo "cleanup"
+
 # sync with remote
 git fetch origin main
 git reset --hard origin/main
 find .git -name "*.lock" -delete 2>/dev/null || true
+
+echo "sync"
 
 # check if source usage.txt was modified in the last 2 hours
 if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; then
@@ -38,6 +42,8 @@ if [ $(( $(date +%s) - $(stat -c %Y /kuhpc/work/bi/usage.txt) )) -gt 7200 ]; the
 fi
 
 cp /kuhpc/work/bi/usage.txt .
+
+echo "ready to work"
 
 # create a cleaned usage file with summary information
 {
@@ -108,9 +114,13 @@ cp /kuhpc/work/bi/usage.txt .
   ' OFS='\t' | sort -k2 -r -g | awk 'BEGIN{num=1} {print num++, $0}' OFS='\t'
 } > clean_usage.txt
 
+echo "made file"
+
 rm /home/k506c250/work/kuhpcc.info/.git/HEAD.lock
 rm /home/k506c250/work/kuhpcc.info/.git/index.lock
 find .git -name "*.lock" -delete 2>/dev/null || true
+
+echo "end clean"
 
 # push to github
 cd /home/k506c250/work/kuhpcc.info
@@ -120,7 +130,11 @@ git diff --cached --quiet && echo "Nothing to commit, skipping." && exit 0
 git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M')"
 git push origin main
 
+echo "pushed to github"
+
 find .git -name "*.lock" -delete 2>/dev/null || true
+
+echo "end"
 
 # github repo: https://github.com/katherinecrawford/kuhpcc.info
 # file: https://github.com/katherinecrawford/kuhpcc.info/blob/main/clean_usage.txt
