@@ -113,8 +113,8 @@ footer a:hover{color:var(--blue)}
   <div class="meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
     <span class="stale-warn" id="stale-warn">⚠ Warning: data may be outdated</span>
     <div style="text-align:right">
-      <div>Updated: <b>Mon Jun 29 03:30:44 CDT 2026</b></div>
-      <div>Built: <b>2026-06-29 08:45 UTC</b></div>
+      <div>Updated: <b>Mon Jun 29 08:30:22 CDT 2026</b></div>
+      <div>Built: <b>2026-06-29 13:45 UTC</b></div>
     </div>
   </div>
 </header>
@@ -328,7 +328,7 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 // ── stale data warning ────────────────────────────────────────────────────────
 (function() {
-  const updated = 'Mon Jun 29 03:30:44 CDT 2026';
+  const updated = 'Mon Jun 29 08:30:22 CDT 2026';
   // parse the timestamp — format: "Thu May 14 19:30:45 CDT 2026"
   const parsed = Date.parse(updated);
   if (!isNaN(parsed) && (Date.now() - parsed) > 12 * 60 * 60 * 1000) {
