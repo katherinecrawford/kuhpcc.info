@@ -1,13 +1,13 @@
 BI work storage use per user
 
-Updated: Tue Jul  7 14:31:42 CDT 2026
+Updated: Tue Jul  7 15:30:43 CDT 2026
 
 Size	Used	Avail	Use%
 34T	33T	1.1T	97%
 
 Equal sharing user allotment
 per current # users >=	1GB	10GB	100GB	1000GB
-allotment =			930GB	1107GB	1638GB	4551GB
+allotment =			0GB	0GB	0GB	0GB
 
 RANK	USERNAME	DISK USED	FILES USED
 1	p653w640	6318.08GB	923205
