@@ -3,7 +3,7 @@ BI work storage use per user
 Updated: Sun Sep 20 21:30:16 CDT 2026
 
 Size	Used	Avail	Use%
-34T	34T	7.3M	100%
+34T	34T	8.0M	100%
 
 Equal sharing user allotment
 per current # users >=	1GB	10GB	100GB	1000GB
