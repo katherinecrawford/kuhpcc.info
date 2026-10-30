@@ -113,8 +113,8 @@ footer a:hover{color:var(--blue)}
   <div class="meta" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
     <span class="stale-warn" id="stale-warn">⚠ Warning: data may be outdated</span>
     <div style="text-align:right">
-      <div>Updated: <b>Fri Oct 30 12:30:27 CDT 2026</b></div>
-      <div>Built: <b>2026-10-30 17:45 UTC</b></div>
+      <div>Updated: <b>Fri Oct 30 13:30:25 CDT 2026</b></div>
+      <div>Built: <b>2026-10-30 18:45 UTC</b></div>
     </div>
   </div>
 </header>
@@ -125,7 +125,7 @@ footer a:hover{color:var(--blue)}
   <div class="tile"><div class="tile-label">Used</div>
     <div class="tile-value c-yellow">34T</div></div>
   <div class="tile"><div class="tile-label">Available</div>
-    <div class="tile-value c-green">380G</div></div>
+    <div class="tile-value c-green">376G</div></div>
   <div class="tile"><div class="tile-label">Utilisation</div>
     <div class="tile-value c-accent">99%</div></div>
   <div class="tile"><div class="tile-label">Users</div>
@@ -328,7 +328,7 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 // ── stale data warning ────────────────────────────────────────────────────────
 (function() {
-  const updated = 'Fri Oct 30 12:30:27 CDT 2026';
+  const updated = 'Fri Oct 30 13:30:25 CDT 2026';
   // parse the timestamp — format: "Thu May 14 19:30:45 CDT 2026"
   const parsed = Date.parse(updated);
   if (!isNaN(parsed) && (Date.now() - parsed) > 12 * 60 * 60 * 1000) {
